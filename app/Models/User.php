@@ -2,15 +2,21 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\UserStatus;
+use App\Enums\UserType;
+use App\Traits\HasUserType;
+use Database\Factories\UserFactory;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    /** @use HasFactory<UserFactory> */
+    use HasFactory, HasUserType, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -21,6 +27,12 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'user_type',
+        'status',
+    ];
+
+    protected $attributes = [
+        'status' => UserStatus::Active,
     ];
 
     /**
@@ -43,6 +55,17 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'user_type' => UserType::class,
+            'status' => UserStatus::class,
         ];
+    }
+
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return match ($panel->getId()) {
+            'admin' => $this->isAdmin() || $this->isSuperAdmin(),
+            'user' => $this->isUser(),
+            default => false,
+        };
     }
 }
