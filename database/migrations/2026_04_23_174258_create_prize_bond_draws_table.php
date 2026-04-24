@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('result_image')->nullable(); // OCR ইমেজ পাথ
             $table->string('status', 15)->default(OcrStatus::PENDING);
             $table->timestamps();
-            
+
             $table->index('draw_date');
             $table->index('status');
         });

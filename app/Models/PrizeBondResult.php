@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class PrizeBondResult extends Model
 {
-     protected $fillable = [
+    protected $fillable = [
         'draw_id',
         'user_id',
         'bond_number',

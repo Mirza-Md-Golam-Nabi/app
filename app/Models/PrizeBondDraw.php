@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use App\Enums\OcrStatus;
@@ -17,7 +18,7 @@ class PrizeBondDraw extends Model
     {
         return [
             'draw_date' => 'date',
-            'status'    => OcrStatus::class,
+            'status' => OcrStatus::class,
         ];
     }
 

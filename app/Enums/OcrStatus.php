@@ -10,7 +10,7 @@ enum OcrStatus: string
 
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::PENDING => 'Pending',
             self::PROCESSED => 'Processed',
             self::FAILED => 'Failed',
