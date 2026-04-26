@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\UserStatus;
 use App\Enums\UserType;
+use App\Models\BondHolder;
 use App\Traits\HasUserType;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
@@ -67,5 +68,10 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
             'user' => $this->isUser(),
             default => false,
         };
+    }
+
+    public function bondHolders()
+    {
+        return $this->hasMany(BondHolder::class);
     }
 }

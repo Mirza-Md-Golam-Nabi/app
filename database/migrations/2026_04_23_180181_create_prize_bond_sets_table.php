@@ -11,16 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('user_bond_numbers', function (Blueprint $table) {
+        Schema::create('prize_bond_sets', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('bond_holder_id')->constrained('bond_holders')->onDelete('cascade');
-            $table->unsignedBigInteger('prize_bond_set_id')->nullable();
-            $table->string('bond_number', 10);
+            $table->string('name', 10);
             $table->timestamps();
-
-            // Composite Unique Key
-            $table->unique(['user_id', 'bond_number']);
+            $table->softDeletes();
         });
     }
 
@@ -29,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('user_bond_numbers');
+        Schema::dropIfExists('sets');
     }
 };

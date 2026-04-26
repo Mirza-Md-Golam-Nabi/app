@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\PrizeBondSet;
+use App\Models\User;
+use App\Models\UserBondNumber;
 use Illuminate\Database\Eloquent\Model;
 
 class BondHolder extends Model
@@ -19,5 +22,10 @@ class BondHolder extends Model
     public function bondNumbers()
     {
         return $this->hasMany(UserBondNumber::class, 'bond_holder_id');
+    }
+
+    public function prizeBondSets()
+    {
+        return $this->hasMany(PrizeBondSet::class, 'bond_holder_id');
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Filament\User\Resources\BondHolders;
 
+use App\Filament\Forms\BondHolderForm;
 use App\Filament\User\Resources\BondHolders\Pages\ManageBondHolders;
 use App\Models\BondHolder;
 use BackedEnum;
@@ -9,7 +10,6 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -28,14 +28,7 @@ class BondHolderResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema
-            ->components([
-                TextInput::make('name')
-                    ->label('হোল্ডারের নাম')
-                    ->helperText('যেমন: আব্বু, আম্মু, ভাই')
-                    ->required()
-                    ->columnSpanFull()
-                    ->maxLength(255),
-            ]);
+            ->components(BondHolderForm::inputFields());
     }
 
     public static function getEloquentQuery(): Builder
@@ -65,7 +58,8 @@ class BondHolderResource extends Resource
             ])
             ->recordActions([
                 EditAction::make()
-                    ->iconButton(),
+                    ->iconButton()
+                    ->modalWidth('md'),
                 DeleteAction::make()
                     ->iconButton(),
             ])

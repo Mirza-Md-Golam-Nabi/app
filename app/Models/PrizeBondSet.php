@@ -2,18 +2,14 @@
 
 namespace App\Models;
 
-use App\Models\BondHolder;
-use App\Models\PrizeBondSet;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
-class UserBondNumber extends Model
+class PrizeBondSet extends Model
 {
     protected $fillable = [
         'user_id',
         'bond_holder_id',
-        'prize_bond_set_id',
-        'bond_number',
+        'name',
     ];
 
     public function user()
@@ -24,10 +20,5 @@ class UserBondNumber extends Model
     public function bondHolder()
     {
         return $this->belongsTo(BondHolder::class);
-    }
-
-    public function prizeBondSet()
-    {
-        return $this->belongsTo(PrizeBondSet::class);
     }
 }
