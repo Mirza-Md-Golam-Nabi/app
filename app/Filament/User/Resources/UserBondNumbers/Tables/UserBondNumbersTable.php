@@ -18,6 +18,7 @@ class UserBondNumbersTable
     {
         return $table
             ->modifyQueryUsing(fn (Builder $query) => $query->where('user_id', auth()->id()))
+            ->paginated([15, 30, 50, 100, 'all'])
             ->columns([
                 TextColumn::make('bondHolder.name')
                     ->label('Holder Name')
