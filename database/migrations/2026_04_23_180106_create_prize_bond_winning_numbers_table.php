@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('prize_bond_winning_numbers', function (Blueprint $table) {
             $table->id();
             $table->foreignId('draw_id')->constrained('prize_bond_draws')->onDelete('cascade');
-            $table->string('prize_rank');
-            $table->string('winning_number');
+            $table->string('prize_rank', 5)->nullable();
+            $table->string('winning_number', 10);
             $table->timestamps();
         });
     }

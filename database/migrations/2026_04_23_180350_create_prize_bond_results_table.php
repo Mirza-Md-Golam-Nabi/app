@@ -15,9 +15,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('draw_id')->constrained('prize_bond_draws')->onDelete('cascade');
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->string('bond_number');
-            $table->string('prize_rank');
+            $table->string('bond_number', 10);
+            $table->string('prize_rank', 5)->nullable();
             $table->boolean('is_notified')->default(false);
+            $table->timestamp('read_at')->nullable();
             $table->timestamps();
         });
     }

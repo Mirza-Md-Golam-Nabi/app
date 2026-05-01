@@ -16,7 +16,7 @@ return new class extends Migration
             $table->id();
             $table->date('draw_date');
             $table->unsignedSmallInteger('draw_number'); // যেমন: 45তম
-            $table->string('result_image')->nullable(); // OCR ইমেজ পাথ
+            $table->string('result_image', 50)->nullable(); // OCR ইমেজ পাথ
             $table->string('status', 15)->default(OcrStatus::PENDING);
             $table->timestamps();
 
