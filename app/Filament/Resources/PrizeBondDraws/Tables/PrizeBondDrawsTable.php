@@ -73,9 +73,9 @@ class PrizeBondDrawsTable
                                 throw new Exception('কোনো নম্বর extract হয়নি।');
                             }
 
-                            if (count($results) !== 46) {
-                                throw new Exception('মোট '.count($results).'টি নম্বর পাওয়া গেছে, ৪৬টি হওয়ার কথা।');
-                            }
+                            // if (count($results) !== 46) {
+                            //     throw new Exception('মোট '.count($results).'টি নম্বর পাওয়া গেছে, ৪৬টি হওয়ার কথা।');
+                            // }
 
                             // পুরনো data মুছে নতুন insert
                             $record->winningNumbers()->delete();

@@ -50,6 +50,7 @@ class WinningNumbersRelationManager extends RelationManager
                 TextColumn::make('winning_number')
                     ->searchable(),
             ])
+            ->defaultSort('prize_rank')
             ->paginated(['all'])
             ->filters([
                 //

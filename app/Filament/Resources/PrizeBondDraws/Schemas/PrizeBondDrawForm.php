@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Filament\Resources\PrizeBondDraws\Schemas;
 
 use Filament\Forms\Components\DatePicker;
@@ -24,13 +23,16 @@ class PrizeBondDrawForm
                     ->label('রেজাল্ট ইমেজ')
                     ->image()
                     ->disk('public')
-                    ->directory('prize-bond-results/'.date('Y-m'))
+                    ->directory('prize-bond-results')
                     ->visibility('private')
                     ->maxSize(5120)
                     ->acceptedFileTypes(['image/jpeg', 'image/png'])
                     ->imagePreviewHeight('250')
                     ->downloadable()
-                    ->required(),
+                    ->required()
+                    ->getUploadedFileNameForStorageUsing(function ($file, $livewire) {
+                        return $livewire->data['draw_number'] . '_' . time() . '.' . $file->getClientOriginalExtension();
+                    }),
             ]);
     }
 }
