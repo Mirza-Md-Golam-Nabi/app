@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\PrizeBond;
 
 use App\Models\PrizeBondDraw;
@@ -38,15 +39,15 @@ class PrizeBondResultService
         UserBondNumber::query()
             ->whereIn('bond_number', $winningNumbers->keys())
             ->chunkById(50, function ($matchedBonds) use ($draw, $winningNumbers) {
-                $inserts = $matchedBonds->map(fn($bond) => [
-                    'draw_id'     => $draw->id,
-                    'user_id'     => $bond->user_id,
+                $inserts = $matchedBonds->map(fn ($bond) => [
+                    'draw_id' => $draw->id,
+                    'user_id' => $bond->user_id,
                     'bond_number' => $bond->bond_number,
-                    'prize_rank'  => $winningNumbers[$bond->bond_number],
+                    'prize_rank' => $winningNumbers[$bond->bond_number],
                     'is_notified' => false,
-                    'read_at'     => null,
-                    'created_at'  => now(),
-                    'updated_at'  => now(),
+                    'read_at' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ])->toArray();
 
                 DB::table('prize_bond_results')->insert($inserts);

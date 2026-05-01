@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Resources\PrizeBondDraws\Schemas;
 
 use Filament\Forms\Components\DatePicker;
@@ -23,7 +24,7 @@ class PrizeBondDrawForm
                     ->label('রেজাল্ট ইমেজ')
                     ->image()
                     ->disk('public')
-                    ->directory('prize-bond-results/' . date('Y-m'))
+                    ->directory('prize-bond-results/'.date('Y-m'))
                     ->visibility('private')
                     ->maxSize(5120)
                     ->acceptedFileTypes(['image/jpeg', 'image/png'])

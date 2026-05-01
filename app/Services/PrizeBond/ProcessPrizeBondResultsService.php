@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\PrizeBond;
 
 use App\Jobs\ProcessBondResultsJob;
@@ -9,6 +10,6 @@ class ProcessPrizeBondResultsService
     public function handle(): void
     {
         PrizeBondDraw::processed()
-            ->each(fn($draw) => ProcessBondResultsJob::dispatch($draw));
+            ->each(fn ($draw) => ProcessBondResultsJob::dispatch($draw));
     }
 }

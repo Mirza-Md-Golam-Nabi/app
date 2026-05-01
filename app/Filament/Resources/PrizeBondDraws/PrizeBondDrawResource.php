@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Resources\PrizeBondDraws;
 
 use App\Filament\Resources\PrizeBondDraws\Pages\CreatePrizeBondDraw;
@@ -42,9 +43,9 @@ class PrizeBondDrawResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'  => ListPrizeBondDraws::route('/'),
+            'index' => ListPrizeBondDraws::route('/'),
             'create' => CreatePrizeBondDraw::route('/create'),
-            'edit'   => EditPrizeBondDraw::route('/{record}/edit'),
+            'edit' => EditPrizeBondDraw::route('/{record}/edit'),
         ];
     }
 }

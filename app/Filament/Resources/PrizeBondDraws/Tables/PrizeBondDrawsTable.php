@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Resources\PrizeBondDraws\Tables;
 
 use App\Enums\OcrStatus;
@@ -59,21 +60,21 @@ class PrizeBondDrawsTable
                     ->modalDescription('এই ড্র এর রেজাল্ট ইমেজ থেকে নম্বর extract করা হবে।')
                     ->modalSubmitActionLabel('হ্যাঁ, শুরু করুন')
                     ->visible(
-                        fn($record) => in_array($record->status, [
+                        fn ($record) => in_array($record->status, [
                             OcrStatus::PENDING,
                             OcrStatus::FAILED,
                         ])
                     )
                     ->action(function ($record) {
                         try {
-                            $results = (new PrizeBondOcrService())->extractFromImage($record->result_image);
+                            $results = (new PrizeBondOcrService)->extractFromImage($record->result_image);
 
                             if (empty($results)) {
-                                throw new \Exception("কোনো নম্বর extract হয়নি।");
+                                throw new Exception('কোনো নম্বর extract হয়নি।');
                             }
 
                             if (count($results) !== 46) {
-                                throw new Exception("মোট " . count($results) . "টি নম্বর পাওয়া গেছে, ৪৬টি হওয়ার কথা।");
+                                throw new Exception('মোট '.count($results).'টি নম্বর পাওয়া গেছে, ৪৬টি হওয়ার কথা।');
                             }
 
                             // পুরনো data মুছে নতুন insert
@@ -87,11 +88,11 @@ class PrizeBondDrawsTable
 
                             Notification::make()
                                 ->title('সফল!')
-                                ->body(count($results) . 'টি নম্বর extract হয়েছে।')
+                                ->body(count($results).'টি নম্বর extract হয়েছে।')
                                 ->success()
                                 ->send();
 
-                        } catch (\Exception $e) {
+                        } catch (Exception $e) {
                             $record->update(['status' => OcrStatus::FAILED]);
 
                             Notification::make()

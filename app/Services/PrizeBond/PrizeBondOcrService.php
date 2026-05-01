@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services\PrizeBond;
 
 use Illuminate\Support\Facades\Storage;
@@ -14,7 +15,7 @@ class PrizeBondOcrService
             throw new \Exception("ইমেজ ফাইল পাওয়া যায়নি: {$fullPath}");
         }
 
-        putenv('TESSDATA_PREFIX=' . env('TESSDATA_PREFIX'));
+        putenv('TESSDATA_PREFIX='.env('TESSDATA_PREFIX'));
 
         // Raw text extract
         $text = (new TesseractOCR($fullPath))
@@ -30,14 +31,13 @@ class PrizeBondOcrService
     private function parseText(string $text)
     {
         $results = [];
-        $lines   = array_values(array_filter(
+        $lines = array_values(array_filter(
             explode("\n", trim($text)),
-            fn($line) => trim($line) !== ''
+            fn ($line) => trim($line) !== ''
         ));
 
         // ৭ সংখ্যার নম্বর extract করার helper
-        $extract = fn(string $line): array=>
-        preg_match_all('/\b\d{7}\b/', $line, $m) ? $m[0] : [];
+        $extract = fn (string $line): array => preg_match_all('/\b\d{7}\b/', $line, $m) ? $m[0] : [];
 
         // সব লাইন থেকে সংখ্যা সংগ্রহ
         $allNumbers = [];
@@ -70,7 +70,7 @@ class PrizeBondOcrService
         foreach ($allNumbers as $index => $number) {
             $results[] = [
                 'winning_number' => $number,
-                'prize_rank'     => $prizeMap[$index] ?? '5th',
+                'prize_rank' => $prizeMap[$index] ?? '5th',
             ];
         }
 

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Jobs;
 
 use App\Models\PrizeBondDraw;
@@ -10,7 +11,8 @@ class ProcessBondResultsJob implements ShouldQueue
 {
     use Queueable;
 
-    public int $tries   = 3;
+    public int $tries = 3;
+
     public int $backoff = 30;
 
     /**
