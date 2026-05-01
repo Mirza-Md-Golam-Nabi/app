@@ -12,6 +12,7 @@ enum OcrStatus: string implements HasLabel, HasColor, HasIcon {
     case PENDING   = 'pending';
     case PROCESSED = 'processed';
     case FAILED    = 'failed';
+    case EXPIRED   = 'expired';
 
     public function getLabel(): string
     {
@@ -19,6 +20,7 @@ enum OcrStatus: string implements HasLabel, HasColor, HasIcon {
             self::PENDING   => 'Pending',
             self::PROCESSED => 'Processed',
             self::FAILED    => 'Failed',
+            self::EXPIRED   => 'Expired',
         };
     }
 
@@ -28,6 +30,7 @@ enum OcrStatus: string implements HasLabel, HasColor, HasIcon {
             self::PENDING   => 'primary',
             self::PROCESSED => 'success',
             self::FAILED    => 'danger',
+            self::EXPIRED   => 'warning',
         };
     }
 
@@ -37,6 +40,7 @@ enum OcrStatus: string implements HasLabel, HasColor, HasIcon {
             self::PENDING   => Heroicon::Clock,
             self::PROCESSED => Heroicon::CheckCircle,
             self::FAILED    => Heroicon::XCircle,
+            self::EXPIRED   => Heroicon::ExclamationTriangle,
         };
     }
 }

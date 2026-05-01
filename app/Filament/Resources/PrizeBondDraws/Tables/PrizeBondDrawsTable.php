@@ -3,6 +3,7 @@ namespace App\Filament\Resources\PrizeBondDraws\Tables;
 
 use App\Enums\OcrStatus;
 use App\Services\PrizeBond\PrizeBondOcrService;
+use App\Services\PrizeBond\ProcessPrizeBondResultsService;
 use Exception;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
@@ -80,6 +81,9 @@ class PrizeBondDrawsTable
                             $record->winningNumbers()->createMany($results);
 
                             $record->update(['status' => OcrStatus::PROCESSED]);
+
+                            // Fetch processed draws and dispatch background jobs to generate prize bond results
+                            app(ProcessPrizeBondResultsService::class)->handle();
 
                             Notification::make()
                                 ->title('সফল!')

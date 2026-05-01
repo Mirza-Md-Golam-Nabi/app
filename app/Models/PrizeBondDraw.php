@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\OcrStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 class PrizeBondDraw extends Model
@@ -34,14 +35,14 @@ class PrizeBondDraw extends Model
     }
 
     // Scopes
-    public function scopePending($query)
+    public function scopePending(Builder $query)
     {
-        return $query->where('status', 'pending');
+        return $query->where('status', OcrStatus::PENDING);
     }
 
-    public function scopeProcessed($query)
+    public function scopeProcessed(Builder $query)
     {
-        return $query->where('status', 'processed');
+        return $query->where('status', OcrStatus::PROCESSED);
     }
 
     // Accessors

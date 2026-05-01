@@ -14,6 +14,7 @@ class PrizeBondResult extends Model
         'bond_number',
         'prize_rank',
         'is_notified',
+        'read_at',
     ];
 
     public function draw()
