@@ -1,10 +1,10 @@
 <?php
-
 namespace App\Filament\Resources\PrizeBondDraws\Pages;
 
 use App\Filament\Resources\PrizeBondDraws\PrizeBondDrawResource;
 use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Support\Icons\Heroicon;
 
 class ListPrizeBondDraws extends ListRecords
 {
@@ -13,7 +13,10 @@ class ListPrizeBondDraws extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            CreateAction::make(),
+            CreateAction::make()
+                ->label('New Bond')
+                ->icon(Heroicon::Plus)
+                ->size('sm'),
         ];
     }
 }

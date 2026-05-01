@@ -1,5 +1,5 @@
 <?php
-namespace App\Services;
+namespace App\Services\PrizeBond;
 
 use Illuminate\Support\Facades\Storage;
 use thiagoalessio\TesseractOCR\TesseractOCR;

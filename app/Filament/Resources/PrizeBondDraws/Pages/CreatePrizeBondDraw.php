@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Filament\Resources\PrizeBondDraws\Pages;
 
 use App\Filament\Resources\PrizeBondDraws\PrizeBondDrawResource;

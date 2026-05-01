@@ -2,7 +2,7 @@
 namespace App\Filament\Resources\PrizeBondDraws\Tables;
 
 use App\Enums\OcrStatus;
-use App\Services\PrizeBondOcrService;
+use App\Services\PrizeBond\PrizeBondOcrService;
 use Exception;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;

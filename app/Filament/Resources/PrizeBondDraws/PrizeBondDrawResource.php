@@ -4,6 +4,7 @@ namespace App\Filament\Resources\PrizeBondDraws;
 use App\Filament\Resources\PrizeBondDraws\Pages\CreatePrizeBondDraw;
 use App\Filament\Resources\PrizeBondDraws\Pages\EditPrizeBondDraw;
 use App\Filament\Resources\PrizeBondDraws\Pages\ListPrizeBondDraws;
+use App\Filament\Resources\PrizeBondDraws\RelationManagers\WinningNumbersRelationManager;
 use App\Filament\Resources\PrizeBondDraws\Schemas\PrizeBondDrawForm;
 use App\Filament\Resources\PrizeBondDraws\Tables\PrizeBondDrawsTable;
 use App\Models\PrizeBondDraw;
@@ -34,7 +35,7 @@ class PrizeBondDrawResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            WinningNumbersRelationManager::class,
         ];
     }
 
