@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\PrizeBondDraws\Tables;
 
 use App\Enums\OcrStatus;
+use App\Http\Controllers\NotificationController;
 use App\Services\PrizeBond\PrizeBondOcrService;
 use App\Services\PrizeBond\ProcessPrizeBondResultsService;
 use Exception;
@@ -92,6 +93,13 @@ class PrizeBondDrawsTable
                                 ->success()
                                 ->send();
 
+                            // Notify all admins about the OCR completion
+                            app(NotificationController::class)->ocrCompleted(
+                                draw: $record,
+                                count: count($results),
+                                status: 'success',
+                            );
+
                         } catch (Exception $e) {
                             $record->update(['status' => OcrStatus::FAILED]);
 
@@ -100,6 +108,14 @@ class PrizeBondDrawsTable
                                 ->body($e->getMessage())
                                 ->danger()
                                 ->send();
+
+                            // Notify all admins about the OCR completion
+                            app(NotificationController::class)->ocrCompleted(
+                                draw: $record,
+                                count: 0,
+                                status: 'failed',
+                                errorMessage: $e->getMessage(),
+                            );
                         }
                     }),
             ])

@@ -1,15 +1,192 @@
-<div>
-    <button
-        style="position:relative; display:inline-flex; align-items:center; justify-content:center; width:35px; height:35px; border-radius:50%; background:#FAEEDA; border:0.5px solid #FAC775; cursor:pointer;"
-    >
-        <x-filament::icon
-            icon="heroicon-o-bell"
-            style="width:20px; height:20px; color:#BA7517;"
-        />
+<div wire:poll.5s="loadUnreadCount" style="position:relative;">
 
-        {{-- Unread Badge --}}
-        <span style="position:absolute; top:-4px; right:-4px; width:18px; height:18px; background:#E24B4A; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:500; color:#fff; border:2px solid white;">
-            3
-        </span>
+    {{-- Bell Button --}}
+    <button wire:click="toggleDropdown"
+        style="position:relative; display:inline-flex; align-items:center; justify-content:center; width:35px; height:35px; border-radius:50%; background:#FAEEDA; border:0.5px solid #FAC775; cursor:pointer;">
+        <x-filament::icon icon="heroicon-o-bell" style="width:20px; height:20px; color:#BA7517;" />
+
+        @if ($unreadCount > 0)
+            <span
+                style="position:absolute; top:-4px; right:-4px; width:18px; height:18px; background:#E24B4A; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:500; color:#fff; border:2px solid white;">
+                {{ $unreadCount > 99 ? '99+' : $unreadCount }}
+            </span>
+        @endif
     </button>
+
+    {{-- Dropdown --}}
+    @if ($showDropdown)
+        {{-- Backdrop --}}
+        <div wire:click="closeDropdown" style="position:fixed; inset:0; z-index:40;"></div>
+
+        <div
+            style="position:absolute; right:0; top:calc(100% + 8px); width:320px; background:#fff; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.12); border:1px solid #f0f0f0; z-index:50; overflow:hidden;">
+
+            {{-- Header --}}
+            <div
+                style="display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid #f5f5f5;">
+                <span style="font-size:14px; font-weight:600; color:#1a1a1a;">নোটিফিকেশন</span>
+                @if ($unreadCount > 0)
+                    <button wire:click="markAllAsRead"
+                        style="font-size:11px; color:#BA7517; background:none; border:none; cursor:pointer; font-weight:500;">
+                        সব পড়া হয়েছে
+                    </button>
+                @endif
+            </div>
+
+            {{-- List --}}
+            <div style="max-height:360px; overflow-y:auto;">
+                @forelse($notifications as $notification)
+                    <div wire:click="openModal('{{ $notification['id'] }}')"
+                        style="
+                            display:flex; align-items:flex-start; gap:10px;
+                            padding:12px 16px; cursor:pointer;
+                            background:{{ $notification['is_read'] ? '#fff' : '#FFFBF3' }};
+                            border-bottom:1px solid #f9f9f9;
+                            transition: background 0.15s;
+                        "
+                        onmouseover="this.style.background='#fdf6e8'"
+                        onmouseout="this.style.background='{{ $notification['is_read'] ? '#fff' : '#FFFBF3' }}'">
+                        {{-- Icon --}}
+                        <div
+                            style="
+                            width:32px; height:32px; border-radius:50%; flex-shrink:0;
+                            display:flex; align-items:center; justify-content:center;
+                            background:{{ $notification['status'] === 'success' ? '#ECFDF5' : '#FEF2F2' }};
+                        ">
+                            <x-filament::icon
+                                icon="{{ $notification['status'] === 'success' ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle' }}"
+                                style="width:16px; height:16px; color:{{ $notification['status'] === 'success' ? '#10B981' : '#EF4444' }};" />
+                        </div>
+
+                        {{-- Content --}}
+                        <div style="flex:1; min-width:0;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; gap:6px;">
+                                <span
+                                    style="font-size:13px; font-weight:{{ $notification['is_read'] ? '400' : '600' }}; color:#1a1a1a; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                    {{ $notification['title'] }}
+                                </span>
+                                <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                                    {{-- Read/Unread toggle --}}
+                                    <button wire:click.stop="toggleReadStatus('{{ $notification['id'] }}')"
+                                        title="{{ $notification['is_read'] ? 'Unread করুন' : 'Read করুন' }}"
+                                        style="background:none; border:none; cursor:pointer; padding:2px; color:#9ca3af;">
+                                        <x-filament::icon
+                                            icon="{{ $notification['is_read'] ? 'heroicon-o-envelope' : 'heroicon-o-envelope-open' }}"
+                                            style="width:13px; height:13px;" />
+                                    </button>
+
+                                    {{-- Delete বাটন --}}
+                                    <button wire:click.stop="deleteNotification('{{ $notification['id'] }}')"
+                                        title="ডিলিট করুন"
+                                        style="background:none; border:none; cursor:pointer; padding:2px; color:#9ca3af;"
+                                        onmouseover="this.style.color='#EF4444'"
+                                        onmouseout="this.style.color='#9ca3af'">
+                                        <x-filament::icon icon="heroicon-o-trash" style="width:13px; height:13px;" />
+                                    </button>
+
+                                    @if (!$notification['is_read'])
+                                        <span
+                                            style="width:7px; height:7px; border-radius:50%; background:#E24B4A;"></span>
+                                    @endif
+                                </div>
+                            </div>
+                            <p
+                                style="font-size:11px; color:#6b7280; margin:2px 0 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                {{ $notification['body'] }}
+                            </p>
+                            <span style="font-size:10px; color:#9ca3af;">{{ $notification['created_at'] }}</span>
+                        </div>
+                    </div>
+                @empty
+                    <div style="padding:32px 16px; text-align:center; color:#9ca3af; font-size:13px;">
+                        কোনো নোটিফিকেশন নেই
+                    </div>
+                @endforelse
+            </div>
+        </div>
+    @endif
+
+    {{-- Modal --}}
+    @if ($showModal && $selectedNotification)
+        {{-- Backdrop --}}
+        <div wire:click="closeModal" style="position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:60;"></div>
+
+        <div
+            style="position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:420px; background:#fff; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,0.15); z-index:70; overflow:hidden;">
+
+            {{-- Modal Header --}}
+            <div
+                style="display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #f0f0f0;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <div
+                        style="
+                        width:36px; height:36px; border-radius:50%;
+                        display:flex; align-items:center; justify-content:center;
+                        background:{{ $selectedNotification['status'] === 'success' ? '#ECFDF5' : '#FEF2F2' }};
+                    ">
+                        <x-filament::icon
+                            icon="{{ $selectedNotification['status'] === 'success' ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle' }}"
+                            style="width:20px; height:20px; color:{{ $selectedNotification['status'] === 'success' ? '#10B981' : '#EF4444' }};" />
+                    </div>
+                    <span style="font-size:15px; font-weight:600; color:#1a1a1a;">
+                        {{ $selectedNotification['title'] }}
+                    </span>
+                </div>
+                <button wire:click="closeModal"
+                    style="background:none; border:none; cursor:pointer; color:#9ca3af; padding:4px;">
+                    <x-filament::icon icon="heroicon-o-x-mark" style="width:18px; height:18px;" />
+                </button>
+            </div>
+
+            {{-- Modal Body --}}
+            <div style="padding:20px;">
+                <p style="font-size:14px; color:#374151; line-height:1.6; margin:0 0 16px;">
+                    {{ $selectedNotification['body'] }}
+                </p>
+
+                <div style="background:#f9fafb; border-radius:8px; padding:12px; font-size:12px; color:#6b7280;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                        <span>সময়</span>
+                        <span style="color:#374151; font-weight:500;">{{ $selectedNotification['created_at'] }}</span>
+                    </div>
+                    @if ($selectedNotification['draw_number'])
+                        <div style="display:flex; justify-content:space-between;">
+                            <span>Draw Number</span>
+                            <span style="color:#374151; font-weight:500;">#
+                                {{ $selectedNotification['draw_number'] }}</span>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            {{-- Modal Footer --}}
+            <div style="padding:12px 20px 16px; display:flex; justify-content:space-between; align-items:center;">
+
+                {{-- Unread বাটন --}}
+                @if ($selectedNotification['is_read'])
+                    <button wire:click="toggleReadStatus('{{ $selectedNotification['id'] }}')"
+                        style="padding:8px 16px; background:#fff; border:1px solid #e5e7eb; border-radius:8px; color:#6b7280; font-size:13px; font-weight:500; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                        <x-filament::icon icon="heroicon-o-envelope" style="width:14px; height:14px;" />
+                        Unread করুন
+                    </button>
+                @else
+                    <div></div>
+                @endif
+
+                {{-- Delete বাটন --}}
+                <button wire:click="deleteNotification('{{ $selectedNotification['id'] }}')"
+                    style="padding:8px 16px; background:#FEF2F2; border:1px solid #FECACA; border-radius:8px; color:#EF4444; font-size:13px; font-weight:500; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                    <x-filament::icon icon="heroicon-o-trash" style="width:14px; height:14px;" />
+                    ডিলিট করুন
+                </button>
+
+                <button wire:click="closeModal"
+                    style="padding:8px 16px; background:#FAEEDA; border:1px solid #FAC775; border-radius:8px; color:#BA7517; font-size:13px; font-weight:500; cursor:pointer; display:flex; align-items:center; gap:6px;">
+                    <x-filament::icon icon="heroicon-o-x-mark" style="width:14px; height:14px;" />
+                    বন্ধ করুন
+                </button>
+            </div>
+        </div>
+    @endif
+
 </div>

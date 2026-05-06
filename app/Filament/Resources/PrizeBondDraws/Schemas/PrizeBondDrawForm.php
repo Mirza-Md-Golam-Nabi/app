@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Filament\Resources\PrizeBondDraws\Schemas;
 
 use Filament\Forms\Components\DatePicker;
@@ -31,7 +32,7 @@ class PrizeBondDrawForm
                     ->downloadable()
                     ->required()
                     ->getUploadedFileNameForStorageUsing(function ($file, $livewire) {
-                        return $livewire->data['draw_number'] . '_' . time() . '.' . $file->getClientOriginalExtension();
+                        return $livewire->data['draw_number'].'_'.time().'.'.$file->getClientOriginalExtension();
                     }),
             ]);
     }
