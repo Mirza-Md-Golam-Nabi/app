@@ -75,6 +75,7 @@ class NotificationBell extends Component
         return match ($note->data['type'] ?? null) {
             NotificationType::OcrCompleted->value => $this->ocrCompletedNotification($note),
             NotificationType::PrizeBondWon->value => $this->prizeBondWonNotification($note),
+            NotificationType::TaskCompleted->value => $this->taskCompletedNotification($note),
             default => null,
         };
     }
@@ -108,6 +109,21 @@ class NotificationBell extends Component
             'bond_number' => $note->data['bond_number'] ?? null,
             'prize_rank' => $note->data['prize_rank'] ?? null,
             'result_id' => $note->data['result_id'] ?? null,
+            'is_read' => $note->read_at !== null,
+            'read_at' => $note->read_at?->diffForHumans(),
+            'created_at' => $note->created_at->format('d M Y, h:i A'),
+            'human_created_at' => $note->created_at->diffForHumans(),
+        ];
+    }
+
+    protected function taskCompletedNotification($note): array
+    {
+        return [
+            'id' => $note->id,
+            'type' => $note->data['type'] ?? null,
+            'title' => $note->data['title'],
+            'body' => $note->data['body'],
+            'status' => $note->data['status'] ?? null,
             'is_read' => $note->read_at !== null,
             'read_at' => $note->read_at?->diffForHumans(),
             'created_at' => $note->created_at->format('d M Y, h:i A'),

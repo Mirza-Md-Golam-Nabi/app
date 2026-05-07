@@ -9,7 +9,6 @@ use App\Enums\UserType;
 use App\Models\PrizeBondResult;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use Illuminate\Support\Facades\Log;
 
 class PrizeBondWonNotification extends Notification
 {

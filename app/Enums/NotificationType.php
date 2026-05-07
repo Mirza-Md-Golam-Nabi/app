@@ -8,4 +8,5 @@ enum NotificationType: string
 
     case PrizeBondWon = 'PrizeBondWon';
 
+    case TaskCompleted = 'TaskCompleted';
 }

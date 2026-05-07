@@ -8,6 +8,8 @@ use App\Models\PrizeBondResult;
 use App\Models\User;
 use App\Notifications\OcrCompletedNotification;
 use App\Notifications\PrizeBondWonNotification;
+use App\Notifications\TaskCompletedNotification;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Notification;
 
 class NotificationController extends Controller
@@ -54,5 +56,13 @@ class NotificationController extends Controller
                 // is_notified = true করো যাতে duplicate না হয়
                 $result->update(['is_notified' => true]);
             });
+    }
+
+    public function taskCompletedNotification(string $title, string $body)
+    {
+        Auth::user()->notify(new TaskCompletedNotification(
+            title: $title,
+            body: $body,
+        ));
     }
 }
