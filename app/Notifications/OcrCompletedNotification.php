@@ -3,6 +3,7 @@
 namespace App\Notifications;
 
 use App\Enums\NotificationRetention;
+use App\Enums\NotificationStatus;
 use App\Enums\NotificationType;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
@@ -17,7 +18,7 @@ class OcrCompletedNotification extends Notification
     public function __construct(
         public readonly mixed $draw,
         public readonly int $count,
-        public readonly string $status = 'success',
+        public readonly string $status = NotificationStatus::Success->value,
         public readonly string $errorMessage = '',
     ) {}
 
@@ -39,8 +40,8 @@ class OcrCompletedNotification extends Notification
         return [
             'type' => NotificationType::OcrCompleted,
             'retention' => NotificationRetention::OneDay,
-            'title' => $this->status === 'success' ? 'OCR সম্পন্ন' : 'OCR ব্যর্থ',
-            'body' => $this->status === 'success'
+            'title' => $this->status === NotificationStatus::Success->value ? 'OCR সম্পন্ন' : 'OCR ব্যর্থ',
+            'body' => $this->status === NotificationStatus::Success->value
                 ? "{$this->count}টি নম্বর extract হয়েছে।"
                 : $this->errorMessage,
             'draw_id' => $this->draw->id,

@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Enums\NotificationType;
 use App\Enums\UserType;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -48,6 +49,13 @@ class NotificationBell extends Component
         }
     }
 
+    protected function findNotification(string $id)
+    {
+        return Auth::user()
+            ->notifications()
+            ->find($id);
+    }
+
     public function loadNotifications(): void
     {
         $user = Auth::user();
@@ -56,24 +64,60 @@ class NotificationBell extends Component
             ->latest()
             ->take(10)
             ->get()
-            ->map(fn ($n) => [
-                'id' => $n->id,
-                'type' => $n->data['type'] ?? null,
-                'title' => $n->data['title'],
-                'body' => $n->data['body'],
-                'status' => $n->data['status'],
-                'draw_number' => $n->data['draw_number'] ?? null,
-                'read_at' => $n->read_at?->diffForHumans(),
-                'created_at' => $n->created_at->diffForHumans(),
-                'is_read' => ! is_null($n->read_at),
-            ])
+            ->map(fn ($note) => $this->mapNotification($note))
+            ->filter()
+            ->values()
             ->toArray();
+    }
+
+    protected function mapNotification($note): ?array
+    {
+        return match ($note->data['type'] ?? null) {
+            NotificationType::OcrCompleted->value => $this->ocrCompletedNotification($note),
+            NotificationType::PrizeBondWon->value => $this->prizeBondWonNotification($note),
+            default => null,
+        };
+    }
+
+    protected function ocrCompletedNotification($note): array
+    {
+        return [
+            'id' => $note->id,
+            'type' => $note->data['type'] ?? null,
+            'title' => $note->data['title'],
+            'body' => $note->data['body'],
+            'status' => $note->data['status'],
+            'draw_number' => $note->data['draw_number'] ?? null,
+            'read_at' => $note->read_at,
+            'human_read_at' => $note->read_at?->diffForHumans(),
+            'created_at' => $note->created_at->format('d M Y, h:i A'),
+            'human_created_at' => $note->created_at->diffForHumans(),
+            'is_read' => $note->read_at !== null,
+        ];
+    }
+
+    protected function prizeBondWonNotification($note): array
+    {
+        return [
+            'id' => $note->id,
+            'type' => $note->data['type'] ?? null,
+            'title' => $note->data['title'],
+            'body' => $note->data['body'],
+            'status' => $note->data['status'],
+            'draw_number' => $note->data['draw_number'] ?? null,
+            'bond_number' => $note->data['bond_number'] ?? null,
+            'prize_rank' => $note->data['prize_rank'] ?? null,
+            'result_id' => $note->data['result_id'] ?? null,
+            'is_read' => $note->read_at !== null,
+            'read_at' => $note->read_at?->diffForHumans(),
+            'created_at' => $note->created_at->format('d M Y, h:i A'),
+            'human_created_at' => $note->created_at->diffForHumans(),
+        ];
     }
 
     public function openModal(string $id): void
     {
-        $user = Auth::user();
-        $notification = $user->notifications()->find($id);
+        $notification = $this->findNotification($id);
 
         if (! $notification) {
             return;
@@ -85,16 +129,7 @@ class NotificationBell extends Component
             $this->loadUnreadCount();
         }
 
-        $this->selectedNotification = [
-            'id' => $notification->id,
-            'type' => $notification->data['type'] ?? null,
-            'title' => $notification->data['title'],
-            'body' => $notification->data['body'],
-            'status' => $notification->data['status'],
-            'draw_number' => $notification->data['draw_number'] ?? null,
-            'created_at' => $notification->created_at->format('d M Y, h:i A'),
-            'is_read' => true,
-        ];
+        $this->selectedNotification = $this->mapNotification($notification);
 
         $this->showModal = true;
         $this->showDropdown = false;
@@ -111,28 +146,31 @@ class NotificationBell extends Component
 
     public function markAllAsRead(): void
     {
-        Auth::user()->unreadNotifications->markAsRead();
-        $this->loadUnreadCount();
-        $this->loadNotifications();
+        $user = Auth::user();
+
+        if (! $user) {
+            return;
+        }
+
+        $user->unreadNotifications()
+            ->update(['read_at' => now()]);
+
+        $this->refresh();
     }
 
     public function toggleReadStatus(string $id): void
     {
-        $user = Auth::user();
-        $notification = $user->notifications()->find($id);
+        $notification = $this->findNotification($id);
 
         if (! $notification) {
             return;
         }
 
-        if (is_null($notification->read_at)) {
-            $notification->markAsRead();
-        } else {
-            $notification->update(['read_at' => null]); // unread
-        }
+        $notification->read_at
+            ? $notification->update(['read_at' => null])
+            : $notification->markAsRead();
 
-        $this->loadUnreadCount();
-        $this->loadNotifications();
+        $this->refresh();
     }
 
     public function closeDropdown(): void
@@ -142,8 +180,7 @@ class NotificationBell extends Component
 
     public function deleteNotification(string $id): void
     {
-        $user = Auth::user();
-        $notification = $user->notifications()->find($id);
+        $notification = $this->findNotification($id);
 
         if (! $notification) {
             return;
@@ -152,10 +189,19 @@ class NotificationBell extends Component
         $notification->delete();
 
         // Modal খোলা থাকলে বন্ধ করো
-        if ($this->showModal && $this->selectedNotification['id'] === $id) {
+        if (
+            $this->showModal &&
+            $this->selectedNotification &&
+            $this->selectedNotification['id'] === $id
+        ) {
             $this->closeModal();
         }
 
+        $this->refresh();
+    }
+
+    protected function refresh(): void
+    {
         $this->loadUnreadCount();
         $this->loadNotifications();
     }

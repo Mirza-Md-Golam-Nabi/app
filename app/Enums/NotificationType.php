@@ -6,4 +6,6 @@ enum NotificationType: string
 {
     case OcrCompleted = 'OcrCompleted';
 
+    case PrizeBondWon = 'PrizeBondWon';
+
 }

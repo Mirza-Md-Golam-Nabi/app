@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Http\Controllers\NotificationController;
 use App\Models\PrizeBondDraw;
 use App\Services\PrizeBond\PrizeBondResultService;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -30,5 +31,7 @@ class ProcessBondResultsJob implements ShouldQueue
     public function handle(PrizeBondResultService $service): void
     {
         $service->process($this->draw);
+
+        app(NotificationController::class)->notifyWinners();
     }
 }

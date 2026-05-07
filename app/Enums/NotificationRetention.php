@@ -16,5 +16,7 @@ enum NotificationRetention: string
 
     case OneYear = 'OneYear';
 
+    case TwoYears = 'TwoYears';
+
     case Forever = 'Forever';
 }

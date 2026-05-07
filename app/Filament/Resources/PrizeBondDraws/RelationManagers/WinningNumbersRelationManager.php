@@ -14,6 +14,7 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class WinningNumbersRelationManager extends RelationManager
 {
@@ -44,13 +45,13 @@ class WinningNumbersRelationManager extends RelationManager
     {
         return $table
             ->recordTitleAttribute('winning_number')
+            ->modifyQueryUsing(fn (Builder $query) => $query->orderBy('prize_rank')->orderBy('winning_number'))
             ->columns([
                 TextColumn::make('prize_rank')
                     ->searchable(),
                 TextColumn::make('winning_number')
                     ->searchable(),
             ])
-            ->defaultSort('prize_rank')
             ->paginated(['all'])
             ->filters([
                 //

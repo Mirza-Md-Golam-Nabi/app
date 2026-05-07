@@ -1,4 +1,6 @@
 @php
+    use App\Support\NotificationStatusConfig;
+
     $defaultFooterActions = [
         [
             'key' => 'unread',
@@ -27,6 +29,7 @@
     ];
 
     $resolvedActions = $footerActions ?? $defaultFooterActions;
+    $status = NotificationStatusConfig::get($notification['status']);
 @endphp
 
 {{-- Modal Header --}}
@@ -37,11 +40,11 @@
             style="
             width:36px; height:36px; border-radius:50%;
             display:flex; align-items:center; justify-content:center;
-            background:{{ $notification['status'] === 'success' ? '#ECFDF5' : '#FEF2F2' }};
+            background:{{ $status['bg'] }};
         ">
             <x-filament::icon
-                icon="{{ $notification['status'] === 'success' ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle' }}"
-                style="width:20px; height:20px; color:{{ $notification['status'] === 'success' ? '#10B981' : '#EF4444' }};" />
+                icon="{{ $status['icon'] }}"
+                style="width:20px; height:20px; color:{{ $status['color'] }};" />
         </div>
         <span style="font-size:15px; font-weight:600; color:#1a1a1a;">
             {{ $notification['title'] }}

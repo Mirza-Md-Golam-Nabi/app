@@ -1,5 +1,6 @@
 @php
     use Illuminate\Support\Str;
+    use App\Support\NotificationStatusConfig;
 @endphp
 
 <div wire:poll.5s="loadUnreadCount" style="position:relative;">
@@ -40,6 +41,9 @@
             {{-- List --}}
             <div style="max-height:360px; overflow-y:auto;">
                 @forelse($notifications as $notification)
+                @php
+                    $status = NotificationStatusConfig::get($notification['status']);
+                @endphp
                     <div wire:click="openModal('{{ $notification['id'] }}')"
                         style="
                             display:flex; align-items:flex-start; gap:10px;
@@ -55,11 +59,11 @@
                             style="
                             width:32px; height:32px; border-radius:50%; flex-shrink:0;
                             display:flex; align-items:center; justify-content:center;
-                            background:{{ $notification['status'] === 'success' ? '#ECFDF5' : '#FEF2F2' }};
+                            background:{{ $status['bg'] }};
                         ">
                             <x-filament::icon
-                                icon="{{ $notification['status'] === 'success' ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle' }}"
-                                style="width:16px; height:16px; color:{{ $notification['status'] === 'success' ? '#10B981' : '#EF4444' }};" />
+                                icon="{{ $status['icon'] }}"
+                                style="width:16px; height:16px; color:{{ $status['color'] }};" />
                         </div>
 
                         {{-- Content --}}
@@ -96,7 +100,7 @@
                                 style="font-size:11px; color:#6b7280; margin:2px 0 0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                                 {{ $notification['body'] }}
                             </p>
-                            <span style="font-size:10px; color:#9ca3af;">{{ $notification['created_at'] }}</span>
+                            <span style="font-size:10px; color:#9ca3af;">{{ $notification['human_created_at'] }}</span>
                         </div>
                     </div>
                 @empty
