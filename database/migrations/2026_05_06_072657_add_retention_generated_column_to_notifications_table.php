@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('notifications', function (Blueprint $table) {
-            $table->string('notification_type')
+            $table->string('retention')
                 ->nullable()
-                ->storedAs("json_unquote(json_extract(data, '$.notification_type'))");
+                ->storedAs("json_unquote(json_extract(data, '$.retention'))");
 
-            $table->index('notification_type');
+            $table->index('retention');
         });
     }
 
@@ -26,8 +26,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('notifications', function (Blueprint $table) {
-            $table->dropIndex(['notification_type']);
-            $table->dropColumn('notification_type');
+            $table->dropIndex(['retention']);
+            $table->dropColumn('retention');
         });
     }
 };

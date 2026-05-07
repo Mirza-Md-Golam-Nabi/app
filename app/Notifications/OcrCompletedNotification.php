@@ -2,6 +2,8 @@
 
 namespace App\Notifications;
 
+use App\Enums\NotificationRetention;
+use App\Enums\NotificationType;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
@@ -35,7 +37,8 @@ class OcrCompletedNotification extends Notification
     public function toDatabase(object $notifiable): array
     {
         return [
-            'notification_type' => 'temporary',
+            'type' => NotificationType::OcrCompleted,
+            'retention' => NotificationRetention::OneDay,
             'title' => $this->status === 'success' ? 'OCR সম্পন্ন' : 'OCR ব্যর্থ',
             'body' => $this->status === 'success'
                 ? "{$this->count}টি নম্বর extract হয়েছে।"

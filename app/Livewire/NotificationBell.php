@@ -58,6 +58,7 @@ class NotificationBell extends Component
             ->get()
             ->map(fn ($n) => [
                 'id' => $n->id,
+                'type' => $n->data['type'] ?? null,
                 'title' => $n->data['title'],
                 'body' => $n->data['body'],
                 'status' => $n->data['status'],
@@ -86,6 +87,7 @@ class NotificationBell extends Component
 
         $this->selectedNotification = [
             'id' => $notification->id,
+            'type' => $notification->data['type'] ?? null,
             'title' => $notification->data['title'],
             'body' => $notification->data['body'],
             'status' => $notification->data['status'],
