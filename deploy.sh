@@ -8,7 +8,7 @@ echo "🚀 Deployment started..."
 $PHP artisan down
 echo "✅ Maintenance mode ON"
 
-# Git থেকে latest code নামাও
+# Pull the latest code from Git
 git pull origin dev
 echo "✅ Git pull done"
 
@@ -31,7 +31,7 @@ else
     echo "⚠️  Build assets locally (npm run build) and upload the public/build folder manually."
 fi
 
-# .env file না থাকলে copy করো
+# Copy the .env file if it doesn't exist
 if [ ! -f .env ]; then
     cp .env.example .env
     $PHP artisan key:generate
@@ -47,7 +47,7 @@ $PHP artisan optimize
 $PHP artisan filament:optimize
 echo "✅ Cache rebuilt"
 
-# Queue worker কে নতুন কোড লোড করতে বাধ্য করা
+# Force the queue worker to load the new code
 $PHP artisan queue:restart
 echo "✅ Queue restarted"
 
