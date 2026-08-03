@@ -4,19 +4,19 @@ namespace App\Enums;
 
 enum NotificationRetention: string
 {
-    case OneDay = 'OneDay';
+    case OneDay = 'one_day';
 
-    case OneWeek = 'OneWeek';
+    case OneWeek = 'one_week';
 
-    case OneMonth = 'OneMonth';
+    case OneMonth = 'one_month';
 
-    case ThreeMonths = 'ThreeMonths';
+    case ThreeMonths = 'three_months';
 
-    case SixMonths = 'SixMonths';
+    case SixMonths = 'six_months';
 
-    case OneYear = 'OneYear';
+    case OneYear = 'one_year';
 
-    case TwoYears = 'TwoYears';
+    case TwoYears = 'two_years';
 
-    case Forever = 'Forever';
+    case Forever = 'forever';
 }
