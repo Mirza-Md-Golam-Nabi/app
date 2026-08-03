@@ -21,6 +21,16 @@ echo "✅ Cache cleared"
 $PHP composer.phar install --no-dev --optimize-autoloader
 echo "✅ Composer done"
 
+# Frontend assets build (npm)
+if command -v npm >/dev/null 2>&1; then
+    npm install
+    npm run build
+    echo "✅ Frontend assets built"
+else
+    echo "⚠️  npm not found on this server — public/build was NOT rebuilt."
+    echo "⚠️  Build assets locally (npm run build) and upload the public/build folder manually."
+fi
+
 # .env file না থাকলে copy করো
 if [ ! -f .env ]; then
     cp .env.example .env
