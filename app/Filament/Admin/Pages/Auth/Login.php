@@ -23,4 +23,14 @@ class Login extends BaseLogin
 
         return parent::authenticate();
     }
+
+    public function mount(): void
+    {
+        parent::mount();
+
+        $this->form->fill([
+            'email' => 'admin@example.com',
+            'password' => 'password',
+        ]);
+    }
 }
