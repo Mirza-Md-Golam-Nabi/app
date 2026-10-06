@@ -5,10 +5,13 @@ use App\Enums\UserType;
 use App\Filament\Resources\Schools\Pages\CreateSchool;
 use App\Filament\Resources\Schools\Pages\EditSchool;
 use App\Filament\Resources\Schools\Pages\ListSchools;
+use App\Filament\Resources\Schools\SchoolResource;
+use App\Filament\Resources\Schools\Widgets\MonthlyStudentsChart;
 use App\Filament\Widgets\SchoolStatsOverview;
 use App\Models\School;
 use App\Models\SchoolStudentReport;
 use App\Models\User;
+use App\Services\School\PullSchoolStudentReportService;
 use Filament\Actions\Testing\TestAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
@@ -68,6 +71,21 @@ function schoolReportBody(array $overrides = []): array
     ];
 }
 
+/**
+ * Fill in the year and month columns of a report row built by hand in a test.
+ *
+ * @param  array<string, mixed>  $attributes
+ * @return array<string, mixed>
+ */
+function reportMonthFor(array $attributes): array
+{
+    return [
+        ...$attributes,
+        'report_year' => $attributes['reported_at']->year,
+        'report_month' => $attributes['reported_at']->month,
+    ];
+}
+
 function actingAsSchoolAdmin(): User
 {
     $admin = User::factory()->create(['user_type' => UserType::Admin]);
@@ -108,17 +126,59 @@ it('stores a correctly signed report pushed by a school', function () {
         ->and($report->reported_at->equalTo('2026-10-15T00:00:00+06:00'))->toBeTrue();
 });
 
-it('keeps a single record when the school retries the same report', function () {
-    makeReportingSchool();
+it('keeps one record per school per month, updating it when another report arrives that month', function () {
+    $school = makeReportingSchool();
 
-    pushSchoolReport(schoolReportBody())->assertCreated();
-    pushSchoolReport(schoolReportBody())->assertOk();
+    pushSchoolReport(schoolReportBody(['total_students' => 480, 'reported_at' => '2026-10-15T00:00:00+06:00']))->assertCreated();
+    pushSchoolReport(schoolReportBody(['total_students' => 480, 'reported_at' => '2026-10-15T00:00:00+06:00']))->assertOk();
+    pushSchoolReport(schoolReportBody(['total_students' => 492, 'reported_at' => '2026-10-28T10:30:00+06:00']))->assertOk();
 
-    expect(SchoolStudentReport::count())->toBe(1);
+    $october = SchoolStudentReport::sole();
+
+    expect($october->total_students)->toBe(492)
+        ->and($october->report_year)->toBe(2026)
+        ->and($october->report_month)->toBe(10)
+        ->and($october->period_label)->toBe('October 2026')
+        ->and($october->reported_at->equalTo('2026-10-28T10:30:00+06:00'))->toBeTrue();
 
     pushSchoolReport(schoolReportBody(['total_students' => 495, 'reported_at' => '2026-11-15T00:00:00+06:00']))->assertCreated();
 
-    expect(SchoolStudentReport::count())->toBe(2);
+    expect($school->reports()->count())->toBe(2)
+        ->and($school->fresh()->latestReport->total_students)->toBe(495);
+});
+
+it('stores a new record for the same month of a different year', function () {
+    $school = makeReportingSchool();
+
+    pushSchoolReport(schoolReportBody(['total_students' => 480, 'reported_at' => '2026-10-15T00:00:00+06:00']))->assertCreated();
+    pushSchoolReport(schoolReportBody(['total_students' => 530, 'reported_at' => '2027-10-15T00:00:00+06:00']))->assertCreated();
+
+    expect($school->reports()->orderBy('report_year')->pluck('total_students', 'report_year')->all())
+        ->toBe([2026 => 480, 2027 => 530]);
+});
+
+it('replaces the month\'s pushed record when the same month is fetched, and keeps schools apart', function () {
+    $school = makeReportingSchool();
+    $other = School::factory()->create(['school_code' => 'school-77', 'secret' => 'other-secret']);
+
+    $this->travelTo('2026-10-20 09:00:00');
+
+    pushSchoolReport(schoolReportBody(['total_students' => 480, 'reported_at' => now()->subDays(5)->toIso8601String()]))->assertCreated();
+    pushSchoolReport(schoolReportBody(['school_id' => 'school-77', 'total_students' => 90, 'reported_at' => now()->toIso8601String()]), secret: 'other-secret')->assertCreated();
+
+    Http::fake(['school.test/*' => Http::response([
+        'school_id' => 'school-42',
+        'total_students' => 501,
+        'reported_at' => now()->toIso8601String(),
+    ])]);
+
+    app(PullSchoolStudentReportService::class)->handle($school);
+
+    $report = $school->reports()->sole();
+
+    expect($report->total_students)->toBe(501)
+        ->and($report->source)->toBe(SchoolReportSource::Pull)
+        ->and($other->reports()->sole()->total_students)->toBe(90);
 });
 
 it('rejects a report that is not authentically from the school it names', function (Closure $send) {
@@ -219,10 +279,10 @@ it('flags a school as overdue when it has not reported within the expected windo
 
     expect($school->isStale())->toBeTrue();
 
-    $school->reports()->create(['total_students' => 10, 'reported_at' => now()->subDays(36), 'source' => SchoolReportSource::Push]);
+    $school->reports()->create(reportMonthFor(['total_students' => 10, 'reported_at' => now()->subDays(36), 'source' => SchoolReportSource::Push]));
     expect($school->fresh()->isStale())->toBeTrue();
 
-    $school->reports()->create(['total_students' => 12, 'reported_at' => now()->subDays(3), 'source' => SchoolReportSource::Push]);
+    $school->reports()->create(reportMonthFor(['total_students' => 12, 'reported_at' => now()->subDays(3), 'source' => SchoolReportSource::Push]));
     expect($school->fresh()->isStale())->toBeFalse();
 });
 
@@ -230,8 +290,8 @@ it('lists schools with their latest student count for an admin', function () {
     actingAsSchoolAdmin();
 
     $school = makeReportingSchool();
-    $school->reports()->create(['total_students' => 300, 'reported_at' => now()->subMonths(2), 'source' => SchoolReportSource::Push]);
-    $school->reports()->create(['total_students' => 345, 'reported_at' => now()->subDay(), 'source' => SchoolReportSource::Push]);
+    $school->reports()->create(reportMonthFor(['total_students' => 300, 'reported_at' => now()->subMonths(2), 'source' => SchoolReportSource::Push]));
+    $school->reports()->create(reportMonthFor(['total_students' => 345, 'reported_at' => now()->subDay(), 'source' => SchoolReportSource::Push]));
     $silent = School::factory()->create(['name' => 'Silent School']);
 
     Livewire::test(ListSchools::class)
@@ -305,18 +365,125 @@ it('sums the latest count of every active school on the overview', function () {
     actingAsSchoolAdmin();
 
     $first = makeReportingSchool();
-    $first->reports()->create(['total_students' => 900, 'reported_at' => now()->subMonths(2), 'source' => SchoolReportSource::Push]);
-    $first->reports()->create(['total_students' => 1000, 'reported_at' => now()->subDay(), 'source' => SchoolReportSource::Push]);
+    $first->reports()->create(reportMonthFor(['total_students' => 900, 'reported_at' => now()->subMonths(2), 'source' => SchoolReportSource::Push]));
+    $first->reports()->create(reportMonthFor(['total_students' => 1000, 'reported_at' => now()->subDay(), 'source' => SchoolReportSource::Push]));
 
     $second = School::factory()->create();
-    $second->reports()->create(['total_students' => 234, 'reported_at' => now()->subDays(2), 'source' => SchoolReportSource::Pull]);
+    $second->reports()->create(reportMonthFor(['total_students' => 234, 'reported_at' => now()->subDays(2), 'source' => SchoolReportSource::Pull]));
 
     $inactive = School::factory()->inactive()->create();
-    $inactive->reports()->create(['total_students' => 5000, 'reported_at' => now(), 'source' => SchoolReportSource::Push]);
+    $inactive->reports()->create(reportMonthFor(['total_students' => 5000, 'reported_at' => now(), 'source' => SchoolReportSource::Push]));
 
     School::factory()->create(['name' => 'Never Reported']);
 
     Livewire::test(SchoolStatsOverview::class)
         ->assertSee('1,234')
         ->assertDontSee('6,234');
+});
+
+it('replaces the secret from the school page and stops accepting the old one', function () {
+    actingAsSchoolAdmin();
+    $school = makeReportingSchool();
+
+    Livewire::test(EditSchool::class, ['record' => $school->id])
+        ->assertSee('test-secret')
+        ->callAction('regenerateSecret')
+        ->assertNotified('নতুন secret তৈরি হয়েছে')
+        ->assertDontSee('test-secret')
+        ->assertSee($school->fresh()->secret);
+
+    $newSecret = $school->fresh()->secret;
+
+    expect($newSecret)->not->toBe('test-secret')
+        ->and(strlen($newSecret))->toBe(48)
+        ->and($school->fresh()->school_code)->toBe('school-42');
+
+    pushSchoolReport(schoolReportBody(), secret: 'test-secret')->assertUnauthorized();
+    pushSchoolReport(schoolReportBody(), secret: $newSecret)->assertCreated();
+});
+
+it('signs pull requests with the new secret after it is regenerated', function () {
+    $school = makeReportingSchool();
+    $school->regenerateSecret();
+
+    Http::fake(['school.test/*' => Http::response([
+        'school_id' => 'school-42',
+        'total_students' => 9,
+        'reported_at' => now()->toIso8601String(),
+    ])]);
+
+    $this->artisan('schools:pull-student-reports')->assertSuccessful();
+
+    Http::assertSent(function (Request $request) use ($school): bool {
+        $timestamp = $request->header('X-Timestamp')[0];
+
+        return $request->header('X-Signature')[0] === hash_hmac('sha256', "{$timestamp}.school-42", $school->fresh()->secret)
+            && $request->header('X-Signature')[0] !== hash_hmac('sha256', "{$timestamp}.school-42", 'test-secret');
+    });
+});
+
+it('links the overdue stat to the schools list showing only the overdue schools', function () {
+    actingAsSchoolAdmin();
+
+    $upToDate = makeReportingSchool();
+    $upToDate->reports()->create(reportMonthFor(['total_students' => 50, 'reported_at' => now()->subDays(3), 'source' => SchoolReportSource::Push]));
+
+    $lapsed = School::factory()->create(['name' => 'Lapsed School']);
+    $lapsed->reports()->create(reportMonthFor(['total_students' => 40, 'reported_at' => now()->subDays(60), 'source' => SchoolReportSource::Push]));
+
+    $neverReported = School::factory()->create(['name' => 'Never Reported']);
+    $inactive = School::factory()->inactive()->create(['name' => 'Closed School']);
+
+    $overdueUrl = SchoolResource::getUrl('index', ['filters' => ['overdue' => ['isActive' => true]]]);
+
+    Livewire::test(SchoolStatsOverview::class)->assertSeeHtml(e($overdueUrl));
+
+    expect(School::overdue()->pluck('id')->sort()->values()->all())
+        ->toBe(collect([$lapsed->id, $neverReported->id])->sort()->values()->all());
+
+    Livewire::test(ListSchools::class)
+        ->assertCanSeeTableRecords([$upToDate, $lapsed, $neverReported, $inactive])
+        ->filterTable('overdue')
+        ->assertCanNotSeeTableRecords([$upToDate, $inactive]);
+
+    // Opened through the stat's link, the list arrives already filtered.
+    Livewire::withQueryParams(['filters' => ['overdue' => ['isActive' => true]]])
+        ->test(ListSchools::class)
+        ->assertCanSeeTableRecords([$lapsed, $neverReported])
+        ->assertCanNotSeeTableRecords([$upToDate, $inactive]);
+});
+
+it('charts all twelve months of the chosen year, leaving months without a report empty', function () {
+    actingAsSchoolAdmin();
+    $this->travelTo('2027-03-10 10:00:00');
+
+    $school = makeReportingSchool();
+    foreach ([['2026-10-15', 480], ['2026-11-15', 492], ['2027-01-15', 510], ['2027-02-15', 515]] as [$date, $count]) {
+        $school->reports()->create(reportMonthFor(['total_students' => $count, 'reported_at' => Carbon\Carbon::parse($date), 'source' => SchoolReportSource::Push]));
+    }
+    School::factory()->create()->reports()->create(reportMonthFor(['total_students' => 999, 'reported_at' => Carbon\Carbon::parse('2027-01-20'), 'source' => SchoolReportSource::Push]));
+
+    $chart = Livewire::test(MonthlyStudentsChart::class, ['record' => $school]);
+
+    expect($chart->get('filter'))->toBe('2027');
+
+    $data = (fn () => $this->getData())->call($chart->instance());
+
+    expect($data['labels'])->toHaveCount(12)
+        ->and($data['labels'][0])->toBe('Jan')
+        ->and($data['datasets'][0]['data'])->toBe([510, 515, null, null, null, null, null, null, null, null, null, null]);
+
+    $chart->set('filter', '2026');
+    $data = (fn () => $this->getData())->call($chart->instance());
+
+    expect($data['datasets'][0]['data'])->toBe([null, null, null, null, null, null, null, null, null, 480, 492, null])
+        ->and((fn () => $this->getFilters())->call($chart->instance()))->toBe(['2027' => '2027', '2026' => '2026']);
+});
+
+it('shows the monthly chart on the school page', function () {
+    actingAsSchoolAdmin();
+    $school = makeReportingSchool();
+
+    Livewire::test(EditSchool::class, ['record' => $school->id])
+        ->assertSeeLivewire(MonthlyStudentsChart::class);
 });

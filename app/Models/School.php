@@ -51,9 +51,23 @@ class School extends Model
             }
 
             if (blank($school->secret)) {
-                $school->secret = Str::random(48);
+                $school->secret = self::generateSecret();
             }
         });
+    }
+
+    public static function generateSecret(): string
+    {
+        return Str::random(48);
+    }
+
+    /**
+     * Swap in a fresh secret. The old one stops verifying immediately, in
+     * both directions, until the school's .env carries the new one.
+     */
+    public function regenerateSecret(): void
+    {
+        $this->update(['secret' => self::generateSecret()]);
     }
 
     public static function generateCode(): string
@@ -80,6 +94,18 @@ class School extends Model
     public function scopeActive(Builder $query): void
     {
         $query->where('is_active', true);
+    }
+
+    /**
+     * Active schools with no report inside the expected window — the same
+     * schools isStale() flags, as a query.
+     */
+    public function scopeOverdue(Builder $query): void
+    {
+        $query
+            ->where('is_active', true)
+            ->whereDoesntHave('reports', fn (Builder $query) => $query
+                ->where('reported_at', '>=', now()->subDays(config('schools.stale_after_days'))));
     }
 
     /**

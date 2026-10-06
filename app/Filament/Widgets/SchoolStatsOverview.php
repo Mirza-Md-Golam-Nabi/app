@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Filament\Resources\Schools\SchoolResource;
 use App\Models\School;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -28,8 +29,9 @@ class SchoolStatsOverview extends StatsOverviewWidget
                 ->color('success'),
 
             Stat::make('Overdue Schools', number_format($overdue))
-                ->description(config('schools.stale_after_days').' দিনের মধ্যে কোনো রিপোর্ট আসেনি')
-                ->color($overdue > 0 ? 'danger' : 'gray'),
+                ->description(config('schools.stale_after_days').' দিনের মধ্যে কোনো রিপোর্ট আসেনি — তালিকা দেখতে ক্লিক করুন')
+                ->color($overdue > 0 ? 'danger' : 'gray')
+                ->url(SchoolResource::getUrl('index', ['filters' => ['overdue' => ['isActive' => true]]])),
         ];
     }
 }
